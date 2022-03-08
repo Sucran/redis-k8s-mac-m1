@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  serviceName: redis
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      initContainers:
+      - name: init-redis
+        image: library/redis:3.2
+        command:
+        - bash 
+        - "-c"
+        - | 
+          set -ex
+          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
+          [[ -f /mnt/conf/redis.conf ]] && exit 0
+          ordinal=${BASH_REMATCH[1]}
+          # Copy appropriate conf.d files from config-map to emptyDir.
+          cp /mnt/config-map/shared.conf /mnt/conf/redis.conf
+          # ordinal 0 is the first host
+          if [[ $ordinal -eq 0 ]]; then
+            cat /mnt/config-map/master.conf >> /mnt/conf/redis.conf
+          else
+            cat /mnt/config-map/slave.conf >> /mnt/conf/redis.conf
+          fi
+        volumeMounts:
+        - name: conf
+          mountPath: /mnt/conf
+        - name: config-map
+          mountPath: /mnt/config-map
+        - name: data
+          mountPath: /data
+      containers:
+      - name: redis
+        command: ["redis-server", "/etc/redis/redis.conf"]
+        image: library/redis:3.2
+        ports:
+        - name: redis
+          containerPort: 6379
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: conf
+          mountPath: /etc/redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "/usr/local/bin/redis-cli -h $(hostname) ping"
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+      volumes:
+      - name: config-map
+        configMap:
+          name: redis
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 500Mi
+  - metadata:
+      name: conf
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Mi
