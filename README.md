@@ -1,5 +1,5 @@
 # redis-k8s-mac-m1
-redis-3.2.12 for redis-sentinel on k8s as StatefulSet
+redis-3.2.12 for redis-cluster on k8s as StatefulSet
 
 k8s version: 1.25
 
