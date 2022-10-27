@@ -21,8 +21,9 @@ metadata:
     app: redis-sentinel
 spec:
   ports:
-  - name: redis-sentinel
-    port: 26379
-  clusterIP: None
+  type: NodePort
+  - name: redis-conn
+    port: 6379
+    nodePort: 26379
   selector:
-    app: redis-sentinel
+    app: redis
