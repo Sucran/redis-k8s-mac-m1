@@ -1,4 +1,6 @@
-# redis-k8s
+# redis-k8s-mac-m1
 redis-3.2.12 for redis-sentinel on k8s as StatefulSet
 
-k8s version: 1.19
+k8s version: 1.25
+
+WORK FOR MAC M1 !!!
