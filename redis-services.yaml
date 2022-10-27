@@ -20,10 +20,10 @@ metadata:
   labels:
     app: redis-sentinel
 spec:
-  ports:
   type: NodePort
+  ports:
   - name: redis-conn
     port: 6379
-    nodePort: 26379
+    nodePort: 30379
   selector:
     app: redis
